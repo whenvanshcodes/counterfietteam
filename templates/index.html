@@ -412,6 +412,52 @@
         </div>
     </div>
 
+    <!-- Certificate Template -->
+    <div id="certificate-template" class="print-only hidden">
+        <div class="cert-border">
+            <div class="cert-content">
+                <div class="cert-header">
+                    <i class="fas fa-certificate cert-icon"></i>
+                    <h1>Certificate of Authenticity</h1>
+                    <p>Digital Verification Record</p>
+                </div>
+                
+                <div class="cert-body">
+                    <p>This certifies that the currency note analyzed has been verified by the</p>
+                    <h3>AI Forensic Detection System</h3>
+                    
+                    <div class="cert-details">
+                        <div class="cert-row">
+                            <span>Analysis ID:</span>
+                            <strong id="cert-id"></strong>
+                        </div>
+                        <div class="cert-row">
+                            <span>Date Verified:</span>
+                            <strong id="cert-date"></strong>
+                        </div>
+                        <div class="cert-row">
+                            <span>Confidence Score:</span>
+                            <strong id="cert-confidence"></strong>
+                        </div>
+                        <div class="cert-row">
+                            <span>Result:</span>
+                            <strong class="text-success">GENUINE / REAL</strong>
+                        </div>
+                    </div>
+
+                    <div class="cert-signature">
+                        <div class="sig-line"></div>
+                        <p>AI System Verification</p>
+                    </div>
+                </div>
+
+                <div class="cert-footer">
+                    <p>Note: This certificate is a probabilistic estimation based on visual features and does not guarantee physical authenticity.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
