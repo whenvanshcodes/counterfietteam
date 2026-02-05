@@ -9,6 +9,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- AI Insights Side Panel -->
+    <div id="ai-insights-panel" class="side-panel">
+        <div class="panel-header">
+            <h3><i class="fas fa-brain"></i> AI Insights</h3>
+            <button id="close-panel" class="close-btn">&times;</button>
+        </div>
+        <div class="panel-content">
+            <div class="panel-section">
+                <h4>Model Info</h4>
+                <p><strong>Version:</strong> <span id="model-version">Loading...</span></p>
+                <p><strong>Type:</strong> <span id="model-type">Loading...</span></p>
+                <p><strong>Accuracy:</strong> <span id="model-accuracy">Loading...</span></p>
+            </div>
+            <div class="panel-section">
+                <h4>Scan Difficulty</h4>
+                <div class="difficulty-meter-panel">
+                    <div id="panel-difficulty-bar" class="difficulty-fill" style="width: 50%;"></div>
+                </div>
+                <small id="panel-difficulty-text">Moderate</small>
+            </div>
+            <div class="panel-section">
+                <h4><i class="fas fa-exclamation-triangle"></i> Known Limitations</h4>
+                <ul id="model-limitations">
+                    <li>Loading...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <button id="open-insights-btn" class="floating-btn" title="AI Insights"><i class="fas fa-brain"></i></button>
+
     <div class="container">
         <header>
             <div class="header-content">
@@ -16,6 +46,29 @@
                 <p>Advanced AI-powered forensic analysis system</p>
             </div>
             <div class="header-actions">
+                <button id="lang-toggle" class="tool-icon" title="Switch Language">EN/HI</button>
+                
+                <div class="dropdown" id="access-dropdown">
+                    <button class="tool-icon dropdown-toggle" id="access-menu-btn" title="Accessibility Options">
+                        <i class="fas fa-universal-access"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <div class="menu-header">Accessibility</div>
+                        <div class="menu-item">
+                            <span>Font Size</span>
+                            <div class="font-controls-mini">
+                                <button id="font-decrease"><i class="fas fa-minus"></i></button>
+                                <button id="font-increase"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="menu-item">
+                            <button id="access-mode" class="full-width-btn">
+                                <i class="fas fa-eye"></i> High Contrast
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <a href="/admin/login" class="admin-link" title="Admin Login">
                     <i class="fas fa-user-shield"></i>
                 </a>
@@ -37,6 +90,23 @@
                 </div>
             </div>
 
+            <!-- Image Quality Advisory -->
+            <div id="quality-advisory" class="quality-advisory hidden">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="advisory-text">Image quality is low. Results may be inaccurate.</span>
+            </div>
+
+            <!-- Scan Context Selector -->
+            <div class="context-selector">
+                <label for="scan-context"><i class="fas fa-tag"></i> Scan Context:</label>
+                <select id="scan-context">
+                    <option value="personal">Personal Use</option>
+                    <option value="shop">Shop Received</option>
+                    <option value="bank">Bank Exchange</option>
+                    <option value="learning">Learning / Demo</option>
+                </select>
+            </div>
+
             <div class="drop-zone" id="drop-zone">
                 <div class="scan-overlay" id="scan-overlay"></div>
                 <div class="upload-content">
@@ -44,7 +114,10 @@
                     <p>Drag & Drop currency image here</p>
                     <p class="sub-text">or click to browse</p>
                     <div class="divider"><span>OR</span></div>
-                    <button id="camera-btn" class="camera-btn"><i class="fas fa-camera"></i> Use Camera</button>
+                    <div class="upload-actions">
+                        <button id="camera-btn" class="camera-btn"><i class="fas fa-camera"></i> Use Camera</button>
+                        <button id="demo-btn" class="demo-btn"><i class="fas fa-flask"></i> Demo Mode</button>
+                    </div>
                 </div>
                 <input type="file" id="file-input" accept="image/*" hidden>
             </div>
@@ -60,8 +133,23 @@
         </div>
 
         <div class="loading" id="loading">
-            <div class="scanner-bar"></div>
-            <p id="loading-text">Initializing AI Models...</p>
+            <div class="timeline-container">
+                <div class="timeline-step" id="step-1">
+                    <div class="step-icon"><i class="fas fa-upload"></i></div>
+                    <div class="step-label">Uploading</div>
+                </div>
+                <div class="timeline-line"></div>
+                <div class="timeline-step" id="step-2">
+                    <div class="step-icon"><i class="fas fa-microchip"></i></div>
+                    <div class="step-label">Analyzing</div>
+                </div>
+                <div class="timeline-line"></div>
+                <div class="timeline-step" id="step-3">
+                    <div class="step-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="step-label">Verifying</div>
+                </div>
+            </div>
+            <p id="loading-text">Processing image...</p>
         </div>
 
         <!-- Stats Dashboard -->
@@ -77,6 +165,18 @@
             <div class="stat-card">
                 <h3><i class="fas fa-chart-pie"></i> Total</h3>
                 <span id="stat-total">0</span>
+            </div>
+        </div>
+
+        <!-- Session Panel -->
+        <div class="session-panel">
+            <div class="session-header">
+                <h3><i class="fas fa-calculator"></i> Session Calculator</h3>
+                <span id="session-total">₹0</span>
+            </div>
+            <div class="session-stats">
+                <small>Session Scans: <span id="session-count">0</span></small>
+                <small>Verified: <span id="session-verified">0%</span></small>
             </div>
         </div>
 
@@ -168,6 +268,52 @@
             </div>
             <div id="history-list" class="history-list"></div>
         </div>
+
+        <!-- Education Section -->
+        <div class="education-section">
+            <h3><i class="fas fa-graduation-cap"></i> Currency Education</h3>
+            <div class="edu-grid">
+                <div class="edu-card">
+                    <h4><i class="fas fa-water"></i> Watermark</h4>
+                    <p>Hold the note against light to see the Gandhi portrait and denomination. This is a primary security feature.</p>
+                </div>
+                <div class="edu-card">
+                    <h4><i class="fas fa-grip-lines"></i> Security Thread</h4>
+                    <p>The thread changes color from green to blue when tilted. It is woven into the currency paper.</p>
+                </div>
+                <div class="edu-card">
+                    <h4><i class="fas fa-braille"></i> Bleed Lines</h4>
+                    <p>Raised lines on the edges help visually impaired people identify the denomination.</p>
+                </div>
+                <div class="edu-card">
+                    <h4><i class="fas fa-history"></i> History</h4>
+                    <p>Indian currency has evolved with new series (Mahatma Gandhi New Series) introducing enhanced security features to combat counterfeiting.</p>
+                </div>
+            </div>
+            <div class="faq-section">
+                <h3><i class="fas fa-question-circle"></i> Frequently Asked Questions</h3>
+                <details>
+                    <summary>What does this app do?</summary>
+                    <p>This app uses Artificial Intelligence (MobileNetV2) to analyze visual patterns, textures, and security features in currency images to estimate authenticity.</p>
+                </details>
+                <details>
+                    <summary>What does it NOT do?</summary>
+                    <p>It cannot verify physical properties like paper quality, magnetic ink, or UV fluorescence. It relies solely on visual data from the image.</p>
+                </details>
+                <details>
+                    <summary>When to trust the results?</summary>
+                    <p>Results are most reliable with high-resolution, well-lit images. If the "Confidence" is low or the app shows "Uncertain", please verify manually at a bank.</p>
+                </details>
+                <details>
+                    <summary>How accurate is this app?</summary>
+                    <p>The app uses a MobileNetV2 model with ~98% accuracy on the test dataset, but real-world performance depends heavily on image quality.</p>
+                </details>
+                <details>
+                    <summary>What should I do with a fake note?</summary>
+                    <p>Do not recirculate it, as that is a punishable offense. Hand it over to a bank branch or police station.</p>
+                </details>
+            </div>
+        </div>
     </div>
 
     <!-- Image Lightbox -->
@@ -189,21 +335,25 @@
         </div>
     </div>
 
-    <!-- Compare Mode Modal -->
+    <!-- Compare Mode Modal with Slider -->
     <div id="compare-modal" class="lightbox hidden">
         <span class="lightbox-close" onclick="closeCompare()">&times;</span>
         <div class="compare-container">
             <h2><i class="fas fa-columns"></i> Forensic Comparison</h2>
-            <div class="compare-grid">
-                <div class="compare-card">
-                    <h3>Suspect Note (Uploaded)</h3>
-                    <img id="compare-img-suspect">
-                </div>
-                <div class="compare-card">
-                    <h3>Reference Authentic Note</h3>
+            <p class="compare-instruction">Drag the slider to compare with a reference authentic note.</p>
+            
+            <div class="img-comp-container">
+                <div class="img-comp-img">
                     <img id="compare-img-real" src="{{ url_for('static', filename='reference.jpg') }}" alt="Reference Real Note">
-                    <p class="note-caption">Standard ₹500 Indian Rupee (MG Series)</p>
                 </div>
+                <div class="img-comp-img img-comp-overlay">
+                    <img id="compare-img-suspect" alt="Suspect Note">
+                </div>
+            </div>
+            
+            <div class="compare-legend">
+                <span><i class="fas fa-arrow-left"></i> Suspect Note</span>
+                <span>Reference Note <i class="fas fa-arrow-right"></i></span>
             </div>
         </div>
     </div>

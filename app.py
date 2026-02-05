@@ -118,6 +118,15 @@ import base64
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/model_info')
+def get_model_info():
+    try:
+        model_info_path = os.path.join(BASE_DIR, 'model_info.json')
+        with open(model_info_path, 'r') as f:
+            return jsonify(json.load(f))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/analyze_visuals', methods=['POST'])
 def analyze_visuals():
     data = request.json
