@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Currency Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1><i class="fas fa-shield-alt"></i> Fake Currency Detection</h1>
+                <p>Advanced AI-powered forensic analysis system</p>
+            </div>
+            <div class="header-actions">
+                <a href="/admin/login" class="admin-link" title="Admin Login">
+                    <i class="fas fa-user-shield"></i>
+                </a>
+                <button id="theme-toggle" class="theme-btn" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+            </div>
+        </header>
+
+        <div class="upload-section">
+            <!-- Upload Tips Toggle -->
+            <div class="tips-toggle" onclick="toggleTips()">
+                <i class="fas fa-lightbulb"></i> Upload Tips for Best Results
+            </div>
+            <div id="upload-tips" class="upload-tips hidden">
+                <div class="tip-grid">
+                    <div class="tip-item"><i class="fas fa-expand"></i> Use flat surface</div>
+                    <div class="tip-item"><i class="fas fa-sun"></i> Avoid shadows</div>
+                    <div class="tip-item"><i class="fas fa-camera"></i> High resolution</div>
+                    <div class="tip-item"><i class="fas fa-crop"></i> Fill the frame</div>
+                </div>
+            </div>
+
+            <div class="drop-zone" id="drop-zone">
+                <div class="scan-overlay" id="scan-overlay"></div>
+                <div class="upload-content">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <p>Drag & Drop currency image here</p>
+                    <p class="sub-text">or click to browse</p>
+                    <div class="divider"><span>OR</span></div>
+                    <button id="camera-btn" class="camera-btn"><i class="fas fa-camera"></i> Use Camera</button>
+                </div>
+                <input type="file" id="file-input" accept="image/*" hidden>
+            </div>
+            
+            <!-- Camera Interface -->
+            <div id="camera-interface" class="hidden">
+                <video id="camera-stream" autoplay playsinline></video>
+                <div class="camera-controls">
+                    <button id="capture-btn" class="capture-btn"><i class="fas fa-circle"></i></button>
+                    <button id="close-camera" class="close-camera"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="scanner-bar"></div>
+            <p id="loading-text">Initializing AI Models...</p>
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3><i class="fas fa-check-circle" style="color: var(--success-color)"></i> Real</h3>
+                <span id="stat-real">0</span>
+            </div>
+            <div class="stat-card">
+                <h3><i class="fas fa-exclamation-triangle" style="color: var(--danger-color)"></i> Fake</h3>
+                <span id="stat-fake">0</span>
+            </div>
+            <div class="stat-card">
+                <h3><i class="fas fa-chart-pie"></i> Total</h3>
+                <span id="stat-total">0</span>
+            </div>
+        </div>
+
+        <div id="result" class="result-container hidden">
+            <!-- Results will be injected here -->
+    </div>
+    
+    <!-- 4. Authenticity Certificate UI (Hidden by default, shown for REAL) -->
+    <div id="certificate-container" class="certificate-container hidden">
+        <div class="certificate-card">
+            <div class="cert-header">
+                <i class="fas fa-certificate"></i>
+                <h2>Certificate of Authenticity</h2>
+            </div>
+            <div class="cert-body">
+                <div class="cert-row">
+                    <span>Scan ID:</span>
+                    <strong id="cert-id">Loading...</strong>
+                </div>
+                <div class="cert-row">
+                    <span>Timestamp:</span>
+                    <strong id="cert-date">Loading...</strong>
+                </div>
+                <div class="cert-row">
+                    <span>Confidence:</span>
+                    <strong id="cert-confidence">Loading...</strong>
+                </div>
+                <div class="cert-seal">
+                    <i class="fas fa-check-double"></i>
+                    <span>Verified by AI System</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Confidence Drift & 6. Risk Level -->
+    <div id="analysis-insights" class="insights-container hidden">
+        <div class="insight-grid">
+            <div class="insight-card">
+                <h4><i class="fas fa-chart-line"></i> Confidence Drift</h4>
+                <p id="drift-text">Compared to last 10 scans: <span class="trend-up">↑ +1.2%</span></p>
+            </div>
+            <div class="insight-card">
+                <h4><i class="fas fa-shield-alt"></i> Risk Level</h4>
+                <div id="risk-badge" class="risk-badge low">🟢 Low Risk</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Scan Difficulty & 9. Condition Assessment -->
+    <div id="scan-meta" class="scan-meta-container hidden">
+        <div class="meta-row">
+            <div class="meta-item">
+                <span class="meta-label">Scan Difficulty</span>
+                <div class="difficulty-meter">
+                    <div id="difficulty-bar" class="difficulty-fill" style="width: 30%;"></div>
+                </div>
+                <small id="difficulty-text">Easy to analyze</small>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Note Condition</span>
+                <div id="condition-tags" class="condition-tags">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Smart Suggestions -->
+    <div id="smart-suggestions" class="suggestions-panel hidden">
+        <h4><i class="fas fa-robot"></i> Smart Suggestions</h4>
+        <ul id="suggestion-list">
+            <!-- Dynamic suggestions -->
+        </ul>
+    </div>
+    
+    <!-- 10. Model Confidence Disclaimer -->
+    <div class="disclaimer-panel">
+        <details>
+            <summary><i class="fas fa-info-circle"></i> AI Model Disclaimer</summary>
+            <p>AI predictions are probabilistic (Model: MobileNetV2, Accuracy: ~98%) and should be verified manually. This tool is for preliminary screening only.</p>
+        </details>
+    </div>
+
+    <div class="history-section">
+            <div class="history-header">
+                <h3><i class="fas fa-history"></i> Analysis History</h3>
+                <button id="clear-history" class="btn-text text-danger">Clear History</button>
+            </div>
+            <div id="history-list" class="history-list"></div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox -->
+    <div id="lightbox" class="lightbox hidden">
+        <span class="lightbox-close">&times;</span>
+        <div class="lightbox-container">
+            <div class="lightbox-toolbar">
+                <button class="tool-btn active" onclick="switchView('original')"><i class="fas fa-image"></i> Original</button>
+                <button class="tool-btn" onclick="switchView('edges')"><i class="fas fa-water"></i> Edge Map</button>
+                <button class="tool-btn" onclick="switchView('noise')"><i class="fas fa-braille"></i> Texture</button>
+                <button class="tool-btn" onclick="switchView('contrast')"><i class="fas fa-adjust"></i> Contrast</button>
+                <button class="tool-btn" onclick="switchView('heatmap')"><i class="fas fa-fire"></i> Heatmap</button>
+            </div>
+            <div class="lightbox-view-area">
+                <img class="lightbox-content" id="lightbox-img">
+                <div id="lightbox-loader" class="loader-spinner hidden"></div>
+            </div>
+            <div id="lightbox-caption"></div>
+        </div>
+    </div>
+
+    <!-- Compare Mode Modal -->
+    <div id="compare-modal" class="lightbox hidden">
+        <span class="lightbox-close" onclick="closeCompare()">&times;</span>
+        <div class="compare-container">
+            <h2><i class="fas fa-columns"></i> Forensic Comparison</h2>
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h3>Suspect Note (Uploaded)</h3>
+                    <img id="compare-img-suspect">
+                </div>
+                <div class="compare-card">
+                    <h3>Reference Authentic Note</h3>
+                    <img id="compare-img-real" src="{{ url_for('static', filename='reference.jpg') }}" alt="Reference Real Note">
+                    <p class="note-caption">Standard ₹500 Indian Rupee (MG Series)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Printable Report Template -->
+    <div id="print-report" class="print-only">
+        <div class="report-header">
+            <h1>Forensic Analysis Report</h1>
+            <p class="report-meta">Generated by Fake Currency Detection System</p>
+            <div class="report-info">
+                <div><strong>File:</strong> <span id="report-filename">-</span></div>
+                <div><strong>Date:</strong> <span id="report-date">-</span></div>
+                <div><strong>ID:</strong> <span id="report-id">-</span></div>
+            </div>
+        </div>
+
+        <div class="report-summary">
+            <h2>Analysis Summary</h2>
+            <div class="report-badges">
+                <div id="report-badge" class="badge"></div>
+                <div class="confidence-box">
+                    <span>Confidence Score</span>
+                    <strong id="report-confidence">-</strong>
+                </div>
+            </div>
+            <div id="report-reasons" class="report-reasons hidden">
+                <h3>Detected Anomalies</h3>
+                <ul id="report-reasons-list"></ul>
+            </div>
+        </div>
+
+        <div class="report-visuals">
+            <h2>Visual Forensic Layers</h2>
+            <div class="visual-grid">
+                <div class="visual-item">
+                    <img id="report-img-original" alt="Original">
+                    <span>Original Image</span>
+                </div>
+                <div class="visual-item">
+                    <img id="report-img-edges" alt="Edge Detection">
+                    <span>Edge Map (Structure)</span>
+                </div>
+                <div class="visual-item">
+                    <img id="report-img-heatmap" alt="Heatmap">
+                    <span>Spectral Heatmap (Ink Density)</span>
+                </div>
+                <div class="visual-item">
+                    <img id="report-img-noise" alt="Noise Analysis">
+                    <span>Texture/Noise Analysis</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-footer">
+            <p>This report is computer-generated and is intended for preliminary forensic screening.</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

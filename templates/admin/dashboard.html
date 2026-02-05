@@ -1,0 +1,172 @@
+{% extends "admin/base.html" %}
+
+{% block title %}System Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .stat-info h3 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--text-dark);
+    }
+    
+    .stat-info p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .recent-section {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <!-- Total Scans -->
+    <div class="stat-card">
+        <div class="stat-info">
+            <h3>{{ total_scans }}</h3>
+            <p>Total Scans</p>
+        </div>
+        <div class="stat-icon" style="background: #e0f2fe; color: #0284c7;">
+            <i class="fas fa-camera"></i>
+        </div>
+    </div>
+    
+    <!-- Real Notes -->
+    <div class="stat-card">
+        <div class="stat-info">
+            <h3>{{ real_count }}</h3>
+            <p>Real Notes ({{ real_percent }}%)</p>
+        </div>
+        <div class="stat-icon" style="background: #dcfce7; color: #166534;">
+            <i class="fas fa-check-circle"></i>
+        </div>
+    </div>
+    
+    <!-- Fake Notes -->
+    <div class="stat-card">
+        <div class="stat-info">
+            <h3>{{ fake_count }}</h3>
+            <p>Fake Notes ({{ fake_percent }}%)</p>
+        </div>
+        <div class="stat-icon" style="background: #fee2e2; color: #991b1b;">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+    </div>
+    
+    <!-- Avg Confidence -->
+    <div class="stat-card">
+        <div class="stat-info">
+            <h3>{{ avg_confidence }}%</h3>
+            <p>Avg. Confidence</p>
+        </div>
+        <div class="stat-icon" style="background: #f3e8ff; color: #7e22ce;">
+            <i class="fas fa-brain"></i>
+        </div>
+    </div>
+</div>
+
+<div class="recent-section">
+    <div class="section-header">
+        <h2 style="margin:0; font-size:1.2rem;">Recent Activity</h2>
+        <a href="{{ url_for('admin.history') }}" class="btn btn-outline">View All</a>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Result</th>
+                <th>Confidence</th>
+                <th>Filename</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for scan in recent_scans %}
+            <tr>
+                <td>{{ scan.timestamp }}</td>
+                <td>
+                    <span class="badge {% if scan.result == 'REAL' %}badge-real{% else %}badge-fake{% endif %}">
+                        {{ scan.result }}
+                    </span>
+                </td>
+                <td>{{ "%.1f"|format(scan.confidence) }}%</td>
+                <td>{{ scan.filename }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #94a3b8;">No activity recorded yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="recent-section" style="margin-top: 2rem;">
+    <div class="section-header">
+        <h2 style="margin:0; font-size:1.2rem;">System Status</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div>
+            <strong>Model Status:</strong> <span style="color: green;">{{ model_info.status }}</span>
+        </div>
+        <div>
+            <strong>Last Retrain:</strong> <span>{{ model_info.date }}</span>
+        </div>
+        <div>
+            <strong>Model Size:</strong> <span>{{ model_info.size }}</span>
+        </div>
+        <div>
+            <strong>Backend:</strong> <span>Flask (Running)</span>
+        </div>
+    </div>
+    <div style="margin-top: 1rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+        <form action="{{ url_for('admin.clear_all_history') }}" method="POST" onsubmit="return confirm('Are you sure? This cannot be undone.');">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Clear All History
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

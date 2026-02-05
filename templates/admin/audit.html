@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Audit Logs{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="margin-bottom: 1rem;">
+        <span style="color: #64748b;">Showing last 1000 actions</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td style="white-space: nowrap; color: #64748b; font-size: 0.9rem;">
+                    {{ log.timestamp }}
+                </td>
+                <td>
+                    <span style="font-weight: bold;">{{ log.user }}</span>
+                </td>
+                <td>
+                    <span class="badge {% if 'FAIL' in log.action or 'DELETE' in log.action %}badge-fake{% else %}badge-real{% endif %}">
+                        {{ log.action }}
+                    </span>
+                </td>
+                <td>
+                    {{ log.details }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                    No audit logs found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

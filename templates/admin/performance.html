@@ -1,0 +1,277 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Model Details & Monitoring{% endblock %}
+
+{% block content %}
+<style>
+    .metric-card { text-align: center; padding: 1.5rem; transition: transform 0.2s; }
+    .metric-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .metric-value { font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0; }
+    .metric-label { font-size: 0.9rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .metric-sub { font-size: 0.85rem; color: #94a3b8; }
+    
+    .section-header { 
+        display: flex; 
+        align-items: center; 
+        margin: 2rem 0 1rem 0; 
+        padding-bottom: 0.5rem; 
+        border-bottom: 2px solid #e2e8f0; 
+    }
+    .section-header h2 { margin: 0; font-size: 1.25rem; color: #1e293b; }
+    .section-header .badge { 
+        margin-left: 1rem; 
+        padding: 0.25rem 0.75rem; 
+        border-radius: 999px; 
+        font-size: 0.75rem; 
+        font-weight: bold; 
+    }
+    .badge-live { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .badge-static { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .info-item { background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; }
+    .info-label { font-weight: bold; color: #475569; font-size: 0.85rem; display: block; margin-bottom: 0.25rem; }
+    .info-value { color: #1e293b; font-size: 1rem; font-weight: 600; }
+</style>
+
+<!-- Live Monitoring Section -->
+<div class="section-header">
+    <h2><i class="fas fa-satellite-dish" style="color: var(--success);"></i> Live Operational Stats</h2>
+    <span class="badge badge-live"><i class="fas fa-circle" style="font-size: 0.6rem; color: #166534;"></i> LIVE UPDATING</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
+    <!-- Total Scans -->
+    <div class="card metric-card">
+        <div class="metric-label">Total Scans</div>
+        <div class="metric-value" style="color: var(--admin-primary);">{{ stats.total_scans }}</div>
+        <div class="metric-sub">Lifetime Volume</div>
+    </div>
+    
+    <!-- Real/Fake Ratio -->
+    <div class="card metric-card">
+        <div class="metric-label">Detection Rate</div>
+        <div class="metric-value" style="font-size: 1.8rem; display: flex; justify-content: center; gap: 1rem; align-items: baseline;">
+            <span style="color: var(--success);" title="Real">{{ stats.real_pct }}%</span>
+            <span style="color: #cbd5e1;">/</span>
+            <span style="color: var(--danger);" title="Fake">{{ stats.fake_pct }}%</span>
+        </div>
+        <div class="metric-sub">
+            <span style="color: var(--success);">Real</span> vs <span style="color: var(--danger);">Fake</span>
+        </div>
+    </div>
+    
+    <!-- Avg Confidence -->
+    <div class="card metric-card">
+        <div class="metric-label">Avg Confidence</div>
+        <div class="metric-value" style="color: var(--admin-accent);">{{ stats.avg_conf }}%</div>
+        <div class="metric-sub">Global Average</div>
+    </div>
+    
+    <!-- Health Status -->
+    <div class="card metric-card" style="border-top: 4px solid var(--{{ stats.health_color }});">
+        <div class="metric-label">System Health</div>
+        <div class="metric-value" style="color: var(--{{ stats.health_color }}); font-size: 1.8rem;">
+            <i class="fas {{ stats.health_icon }}"></i> {{ stats.health_status }}
+        </div>
+        <div class="metric-sub">Based on confidence stability</div>
+    </div>
+</div>
+
+<!-- Static Benchmarks Section -->
+<div class="section-header" style="margin-top: 3rem;">
+    <h2><i class="fas fa-trophy" style="color: #f59e0b;"></i> Model Training Benchmarks</h2>
+    <span class="badge badge-static">STATIC BASELINE</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+    <div class="card metric-card" style="padding: 1rem;">
+        <h3 class="metric-label">Test Accuracy</h3>
+        <div class="metric-value" style="font-size: 1.8rem; color: #475569;">{{ data.metrics.accuracy }}%</div>
+    </div>
+    <div class="card metric-card" style="padding: 1rem;">
+        <h3 class="metric-label">Precision</h3>
+        <div class="metric-value" style="font-size: 1.8rem; color: #475569;">{{ data.metrics.precision }}%</div>
+    </div>
+    <div class="card metric-card" style="padding: 1rem;">
+        <h3 class="metric-label">Recall</h3>
+        <div class="metric-value" style="font-size: 1.8rem; color: #475569;">{{ data.metrics.recall }}%</div>
+    </div>
+    <div class="card metric-card" style="padding: 1rem;">
+        <h3 class="metric-label">F1 Score</h3>
+        <div class="metric-value" style="font-size: 1.8rem; color: #475569;">{{ data.metrics.f1_score }}%</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    
+    <!-- Left Column: Identity, Training, Dataset -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+        
+        <!-- 1. Model Identity -->
+        <div class="card">
+            <h3 class="section-title" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--admin-primary);">
+                <i class="fas fa-fingerprint"></i> Model Identity
+            </h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Model Name</span>
+                    <span class="info-value">{{ data.identity.name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Version</span>
+                    <span class="info-value">{{ data.identity.version }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Type</span>
+                    <span class="info-value">{{ data.identity.type }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Framework</span>
+                    <span class="info-value">{{ data.identity.framework }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Training Metadata -->
+        <div class="card">
+            <h3 class="section-title" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--admin-primary);">
+                <i class="fas fa-dumbbell"></i> Training Metadata
+            </h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Last Trained</span>
+                    <span class="info-value">{{ data.training.last_trained }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Epochs</span>
+                    <span class="info-value">{{ data.training.epochs }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Duration</span>
+                    <span class="info-value">{{ data.training.duration }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Early Stopping</span>
+                    <span class="info-value">{{ 'Yes' if data.training.early_stopping else 'No' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Dataset Summary -->
+        <div class="card">
+            <h3 class="section-title" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--admin-primary);">
+                <i class="fas fa-database"></i> Dataset Summary
+            </h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Total Images</span>
+                    <span class="info-value">{{ data.dataset.total_images }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Split Ratio</span>
+                    <span class="info-value">{{ data.dataset.split_ratio }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Real Samples</span>
+                    <span class="info-value" style="color: green;">{{ data.dataset.real_count }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fake Samples</span>
+                    <span class="info-value" style="color: red;">{{ data.dataset.fake_count }}</span>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.9rem; color: #64748b;">
+                <strong>Sources:</strong> {{ data.dataset.sources | join(', ') }}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Confusion Matrix, Mapping, Confidence -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+        <!-- 5. Confusion Matrix -->
+        <div class="card">
+            <h3 class="section-title" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--admin-primary);">
+                <i class="fas fa-th"></i> Confusion Matrix (Training)
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: auto 1fr 1fr; gap: 0.5rem; align-items: center; text-align: center;">
+                <div></div>
+                <div style="font-weight: bold; font-size: 0.8rem;">Pred REAL (1)</div>
+                <div style="font-weight: bold; font-size: 0.8rem;">Pred FAKE (0)</div>
+                
+                <div style="font-weight: bold; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.8rem;">Act REAL</div>
+                <div style="background: #dcfce7; padding: 1rem; border-radius: 0.5rem; border: 1px solid #86efac;">
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #166534;">{{ data.confusion_matrix.tn }}</div>
+                    <div style="font-size: 0.7rem;">TN</div>
+                </div>
+                <div style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem; border: 1px solid #fca5a5;">
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #991b1b;">{{ data.confusion_matrix.fp }}</div>
+                    <div style="font-size: 0.7rem;">FP</div>
+                </div>
+                
+                <div style="font-weight: bold; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.8rem;">Act FAKE</div>
+                <div style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem; border: 1px solid #fca5a5;">
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #991b1b;">{{ data.confusion_matrix.fn }}</div>
+                    <div style="font-size: 0.7rem;">FN</div>
+                </div>
+                <div style="background: #dcfce7; padding: 1rem; border-radius: 0.5rem; border: 1px solid #86efac;">
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #166534;">{{ data.confusion_matrix.tp }}</div>
+                    <div style="font-size: 0.7rem;">TP</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Class Mapping -->
+        <div class="card">
+            <h3 class="section-title" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--admin-primary);">
+                <i class="fas fa-tags"></i> Class Label Mapping
+            </h3>
+            <div style="display: flex; gap: 1rem;">
+                <div style="flex: 1; background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 0.5rem; text-align: center; font-weight: bold;">
+                    0 : FAKE
+                </div>
+                <div style="flex: 1; background: #dcfce7; color: #166534; padding: 0.75rem; border-radius: 0.5rem; text-align: center; font-weight: bold;">
+                    1 : REAL
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Confidence Behavior -->
+        <div class="card">
+            <h3 class="section-title" style="border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--admin-primary);">
+                <i class="fas fa-chart-bar"></i> Live Confidence Stats
+            </h3>
+            <div class="info-grid" style="grid-template-columns: 1fr;">
+                <div class="info-item" style="display: flex; justify-content: space-between;">
+                    <span class="info-label">Avg Real Confidence</span>
+                    <span class="info-value">{{ stats.avg_real }}%</span>
+                </div>
+                <div class="info-item" style="display: flex; justify-content: space-between;">
+                    <span class="info-label">Avg Fake Confidence</span>
+                    <span class="info-value">{{ stats.avg_fake }}%</span>
+                </div>
+                <div class="info-item" style="display: flex; justify-content: space-between;">
+                    <span class="info-label">Min / Max Observed</span>
+                    <span class="info-value">{{ stats.min_conf }}% / {{ stats.max_conf }}%</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 8. Limitations -->
+        <div class="card" style="border-left: 4px solid #f59e0b;">
+            <h3 class="section-title" style="color: #d97706; border-color: #fcd34d; border-bottom: none; margin-bottom: 0.5rem;">
+                <i class="fas fa-exclamation-triangle"></i> Known Limitations
+            </h3>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #4b5563; font-size: 0.9rem;">
+                {% for limit in data.limitations %}
+                <li style="margin-bottom: 0.5rem;">{{ limit }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
